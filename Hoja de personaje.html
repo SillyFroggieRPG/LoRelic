@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hoja de Personaje RPG</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #1e012a;
+            color: #fff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            animation: fadeIn 1s ease-in-out;
+            overflow: auto; /* Permite el desplazamiento si el contenido es más grande */
+        }
+
+        .character-sheet {
+            background: linear-gradient(145deg, #3b234e, #2b173d);
+            border-radius: 15px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.5);
+            padding: 25px;
+            text-align: center;
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+            animation: slideIn 0.5s ease-in-out;
+            overflow-y: auto; /* Permite desplazarse hacia arriba y abajo cuando el contenido se desborda */
+            max-height: 90vh; /* Limita la altura máxima para asegurar que no se desborde fuera de la ventana */
+        }
+
+        .character-sheet:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideIn {
+            0% {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .header, .stats, .image-upload {
+            background-color: rgba(110, 41, 68, 0.7);
+            border-radius: 12px;
+            padding: 8px;
+            margin-bottom: 15px;
+            transition: background-color 0.3s ease;
+            animation: fadeIn 1.2s ease-in-out;
+        }
+
+        .header input, .stats input {
+            width: 90%;
+            padding: 8px;
+            margin: 6px 0;
+            border: 2px solid #8e5273;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 18px;
+            background: #4a2b64;
+            color: #e1d4ed;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .header input:focus, .stats input:focus {
+            background-color: #5e3b6e;
+            transform: scale(1.05);
+        }
+
+        .points {
+            margin: 15px 0;
+            font-size: 20px;
+            color: #ff8ba7;
+            animation: fadeIn 1.2s ease-in-out;
+        }
+
+        .attributes {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .attribute {
+            background: rgba(74, 43, 100, 0.8);
+            padding: 12px;
+            border-radius: 10px;
+            color: #e1d4ed;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+
+        .attribute:hover {
+            background: #613b81;
+            transform: translateY(-5px);
+        }
+
+        .attribute input {
+            width: 60%;
+            padding: 5px;
+            margin: 5px 0;
+            border: 1px solid #7c4c89;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 16px;
+            background: #2b173d;
+            color: #fff;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+
+        .attribute input:focus {
+            background-color: #5e3b6e;
+            transform: scale(1.05);
+        }
+
+        .image-upload {
+            margin: 15px 0;
+            border: 2px solid #8e5273;
+            border-radius: 12px;
+            padding: 10px;
+            background: rgba(74, 43, 100, 0.8); /* Background same as other sections */
+            transition: background-color 0.3s ease;
+            animation: fadeIn 1.5s ease-in-out forwards;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .image-upload input {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .image-preview {
+            margin-top: 10px;
+            max-width: 100%;
+            border-radius: 8px;
+        }
+
+        .save-button {
+            background: #8e5273;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            margin-top: 20px;
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+
+        .save-button:hover {
+            background: #6a3552;
+            transform: scale(1.05);
+        }
+
+        .save-button:active {
+            background: #5c2d46;
+        }
+
+        .attribute-label {
+            margin-right: 5px;
+        }
+
+        .section {
+            animation: fadeIn 1s ease-in-out;
+        }
+    </style>
+    <script>
+        function calculateModifier(value) {
+            return Math.floor((value - 10) / 2);
+        }
+
+        function calculatePoints(value) {
+            if (value <= 13) return value - 8;
+            return 5 + (value - 13) * 2;
+        }
+
+        function updateStats(id) {
+            const value = parseInt(document.getElementById(id).value) || 10;
+            const modifier = calculateModifier(value);
+            document.getElementById(id + '-mod').textContent = modifier >= 0 ? "+" + modifier : modifier;
+
+            let totalPoints = 0;
+            ['strength', 'dexterity', 'charisma', 'intelligence'].forEach(stat => {
+                const statValue = parseInt(document.getElementById(stat).value) || 10;
+                totalPoints += calculatePoints(statValue);
+            });
+            document.getElementById('points-counter').textContent = totalPoints;
+
+            const vitality = 20 + calculateModifier(parseInt(document.getElementById('strength').value) || 10);
+            document.getElementById('vitality').textContent = vitality;
+
+            // Calcular la velocidad de movimiento
+            const dexModifier = calculateModifier(parseInt(document.getElementById('dexterity').value) || 10);
+            const movementSpeed = 30 + dexModifier; // Base speed + Dexterity modifier
+            document.getElementById('movement-speed').textContent = movementSpeed;
+
+            // La evasión ahora es fija
+            document.getElementById('evasion').textContent = 10;
+        }
+
+        function showImagePreview(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById('image-preview');
+                    img.src = e.target.result;
+                    img.style.display = 'block';
+                    document.getElementById('character-image').style.display = 'none'; // Ocultar el input de imagen
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function saveSheet() {
+            const sheetContent = document.documentElement.outerHTML;
+            const blob = new Blob([sheetContent], { type: 'text/html' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'hoja_de_personaje_rpg.html';
+            link.click();
+        }
+    </script>
+</head>
+<body>
+    <div class="character-sheet">
+        <div class="header section">
+            <input type="text" placeholder="Nombre del personaje" value="Nombre" onchange="updateStats('strength')">
+        </div>
+        <div class="stats section">
+            <h3>Especialización:</h3>
+            <input type="text" placeholder="Especialización" value="Soldado" onchange="updateStats('strength')">
+        </div>
+        <div class="stats section">
+            <h3>Vitalidad: <span id="vitality">22</span></h3>
+        </div>
+        <div class="stats section">
+            <h3>Evasión: <span id="evasion">10</span></h3>
+        </div>
+        <div class="stats section">
+            <h3>Velocidad de Movimiento: <span id="movement-speed">30</span> unidades</h3>
+        </div>
+        <div class="image-upload section">
+            <label for="character-image">Sube una imagen:</label>
+            <input type="file" id="character-image" accept="image/*" onchange="showImagePreview(event)">
+            <img id="image-preview" class="image-preview" style="display:none;">
+        </div>
+        <div class="attributes section">
+            <div class="attribute">
+                <label for="strength" class="attribute-label">Fuerza :</label>
+                <input id="strength" type="number" min="5" max="20" value="10" onchange="updateStats('strength')">
+                <div>Modificador: <span id="strength-mod">0</span></div>
+            </div>
+            <div class="attribute">
+                <label for="dexterity" class="attribute-label">Destreza :</label>
+                <input id="dexterity" type="number" min="5" max="20" value="10" onchange="updateStats('dexterity')">
+                <div>Modificador: <span id="dexterity-mod">0</span></div>
+            </div>
+            <div class="attribute">
+                <label for="charisma" class="attribute-label">Carisma :</label>
+                <input id="charisma" type="number" min="5" max="20" value="10" onchange="updateStats('charisma')">
+                <div>Modificador: <span id="charisma-mod">0</span></div>
+            </div>
+            <div class="attribute">
+                <label for="intelligence" class="attribute-label">Inteligencia :</label>
+                <input id="intelligence" type="number" min="5" max="20" value="10" onchange="updateStats('intelligence')">
+                <div>Modificador: <span id="intelligence-mod">0</span></div>
+            </div>
+        </div>
+        <div class="points section">Puntos Disponibles: <span id="points-counter">40</span></div>
+        <button class="save-button" onclick="saveSheet()">Guardar Hoja</button>
+    </div>
+</body>
+</html>
